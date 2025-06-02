@@ -9,7 +9,7 @@ def code_agent():
 def test_generate_code(code_agent):
     with patch('openai.ChatCompletion.create') as mock_create:
         mock_create.return_value.choices = [MagicMock(message=MagicMock(content="print('test')"))]
-        code = code_agent.generate_code("test hypothesis")
+        code = code_agent.generate_code("test hypothesis", language="python")
         assert code == "print('test')"
 
 def test_run_pylint(code_agent):
@@ -28,9 +28,18 @@ def test_execute_code(code_agent):
         result = code_agent.execute_code("print('test')")
         assert result["success"] is True
         assert result["output"] == "test output"
+        assert "execution_time" in result
+        assert "memory_usage" in result
 
 def test_wrap_in_pytest(code_agent):
     code = "print('test')"
     wrapped_code = code_agent.wrap_in_pytest(code)
     assert "import pytest" in wrapped_code
-    assert "def test_hypothesis():" in wrapped_code 
+    assert "def test_hypothesis():" in wrapped_code
+
+def test_add_feedback(code_agent):
+    code_agent.add_feedback(5, "Great code!")
+    feedback = code_agent.get_feedback()
+    assert len(feedback) == 1
+    assert feedback[0]["rating"] == 5
+    assert feedback[0]["suggestion"] == "Great code!" 
