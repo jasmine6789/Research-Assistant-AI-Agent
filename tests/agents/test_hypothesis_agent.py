@@ -27,16 +27,14 @@ Expected Outcomes:
 
 @pytest.fixture
 def mock_openai():
-    """Fixture to create a mock OpenAI client"""
-    with patch('openai.OpenAI') as mock_client:
-        # Create mock response
-        mock_response = Mock()
-        mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = MOCK_HYPOTHESIS
-        mock_response.id = "mock_generation_id"
-        
-        # Configure mock client
-        mock_client.return_value.chat.completions.create.return_value = mock_response
+    """Fixture to create a mock OpenAI client using patch(new=...) on the agent's import path"""
+    mock_response = Mock()
+    mock_response.choices = [Mock()]
+    mock_response.choices[0].message.content = MOCK_HYPOTHESIS
+    mock_response.id = "mock_generation_id"
+    mock_client = Mock()
+    mock_client.chat.completions.create.return_value = mock_response
+    with patch('src.agents.hypothesis_agent.OpenAI', new=lambda *args, **kwargs: mock_client):
         yield mock_client
 
 @pytest.fixture

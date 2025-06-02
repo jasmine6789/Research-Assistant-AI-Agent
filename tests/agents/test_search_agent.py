@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, MagicMock, patch
 from src.agents.search_agent import SearchAgent
 
 # Mock paper data
@@ -32,46 +32,39 @@ MOCK_PAPERS = [
 ]
 
 @pytest.fixture
-def mock_mongo_client():
-    """Fixture to create a mock MongoDB client"""
-    with patch('pymongo.MongoClient') as mock_client:
-        # Create mock collection
-        mock_collection = Mock()
-        mock_collection.find.return_value = MOCK_PAPERS
-        mock_collection.__getitem__.return_value = mock_collection
-        
-        # Create mock database
-        mock_db = Mock()
-        mock_db.__getitem__.return_value = mock_collection
-        
-        # Configure mock client
-        mock_client.return_value.__getitem__.return_value = mock_db
-        yield mock_client
+def mock_sentence_transformer(monkeypatch):
+    class DummyModel:
+        def encode(self, texts):
+            return np.array([[1.0, 2.0, 3.0] for _ in texts])
+    monkeypatch.setattr('src.agents.search_agent.SentenceTransformer', lambda *args, **kwargs: DummyModel())
 
 @pytest.fixture
-def search_agent(mock_mongo_client):
-    """Fixture to create a SearchAgent instance with mocked dependencies"""
-    return SearchAgent("mock_uri")
+def mock_collection():
+    collection = MagicMock()
+    collection.find.return_value = MOCK_PAPERS
+    return collection
+
+@pytest.fixture
+def search_agent(mock_sentence_transformer, mock_collection):
+    agent = SearchAgent("mock_uri")
+    agent.collection = mock_collection
+    return agent
 
 def test_search_agent_initialization(search_agent):
-    """Test SearchAgent initialization"""
     assert search_agent is not None
-    assert search_agent.model is not None
+    assert hasattr(search_agent, 'model')
 
 def test_embed_query(search_agent):
-    """Test query embedding functionality"""
     query = "test query"
     embedding = search_agent.embed_query(query)
     assert isinstance(embedding, np.ndarray)
     assert embedding.shape[0] > 0
 
 def test_search_functionality(search_agent):
-    """Test search functionality with mock data"""
     query = "transformer models"
     results = search_agent.search(query, top_k=2)
-    
     assert isinstance(results, list)
-    assert len(results) <= 2  # Should return at most top_k results
+    assert len(results) <= 2
     for paper in results:
         assert "title" in paper
         assert "abstract" in paper
@@ -79,17 +72,14 @@ def test_search_functionality(search_agent):
         assert "year" in paper
         assert "authors" in paper
 
-def test_search_empty_results(search_agent):
-    """Test search with no matching results"""
-    # Mock empty results
-    search_agent.collection.find.return_value = []
+def test_search_empty_results(search_agent, mock_collection):
+    mock_collection.find.return_value = []
+    search_agent.collection = mock_collection
     results = search_agent.search("nonexistent query")
     assert isinstance(results, list)
     assert len(results) == 0
 
-def test_search_paper_without_embedding(search_agent):
-    """Test search with papers missing embedding field"""
-    # Add a paper without embedding to mock data
+def test_search_paper_without_embedding(search_agent, mock_collection):
     papers_without_embedding = MOCK_PAPERS + [{
         "title": "Paper without embedding",
         "abstract": "This paper has no embedding field",
@@ -97,9 +87,8 @@ def test_search_paper_without_embedding(search_agent):
         "year": 2023,
         "arxiv_id": "2304.45678"
     }]
-    search_agent.collection.find.return_value = papers_without_embedding
-    
+    mock_collection.find.return_value = papers_without_embedding
+    search_agent.collection = mock_collection
     results = search_agent.search("test query")
     assert isinstance(results, list)
-    # Should only return papers with embeddings
     assert all("embedding" in paper for paper in results) 
