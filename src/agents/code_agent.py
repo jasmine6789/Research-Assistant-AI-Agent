@@ -16,13 +16,17 @@ class CodeAgent:
         self.openai_api_key = openai_api_key
         openai.api_key = openai_api_key
         self.feedback = []
+        self.code_templates = {}
 
-    def generate_code(self, hypothesis: str, language: str = "python") -> str:
+    def generate_code(self, hypothesis: str, language: str = "python", template: Optional[str] = None) -> str:
         try:
+            system_content = f"You are a code generator that produces high-quality, research-useful {language} code to test a given hypothesis. Follow best practices, include docstrings, and use type hints."
+            if template:
+                system_content += f" Use the following template as a base: {template}"
             response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": f"You are a code generator that produces high-quality, research-useful {language} code to test a given hypothesis. Follow best practices, include docstrings, and use type hints."},
+                    {"role": "system", "content": system_content},
                     {"role": "user", "content": f"Generate {language} code to test the following hypothesis: {hypothesis}"}
                 ]
             )
@@ -83,4 +87,11 @@ def test_hypothesis():
         logger.info(f"Feedback added: rating={rating}, suggestion={suggestion}")
 
     def get_feedback(self) -> List[Dict[str, Any]]:
-        return self.feedback 
+        return self.feedback
+
+    def add_code_template(self, name: str, template: str) -> None:
+        self.code_templates[name] = template
+        logger.info(f"Code template added: {name}")
+
+    def get_code_template(self, name: str) -> Optional[str]:
+        return self.code_templates.get(name) 
