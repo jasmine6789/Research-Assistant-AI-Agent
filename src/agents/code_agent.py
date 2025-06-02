@@ -13,7 +13,7 @@ class CodeAgent:
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a code generator that produces Python code to test a given hypothesis."},
+                {"role": "system", "content": "You are a code generator that produces high-quality, research-useful Python code to test a given hypothesis. Follow best practices, include docstrings, and use type hints."},
                 {"role": "user", "content": f"Generate Python code to test the following hypothesis: {hypothesis}"}
             ]
         )
