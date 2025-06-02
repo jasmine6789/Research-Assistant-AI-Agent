@@ -2,6 +2,10 @@ import pytest
 from unittest.mock import MagicMock, patch
 from src.agents.insight_agent import InsightAgent
 
+class DummyRow:
+    def __init__(self, abstract):
+        self.abstract = abstract
+
 @pytest.fixture
 def mock_bigquery_client(monkeypatch):
     mock_client = MagicMock()
@@ -30,7 +34,7 @@ def test_keyword_frequency(insight_agent, mock_bigquery_client):
     assert freq["transformer"] == 5
 
 def test_evaluation_metrics_regex(insight_agent, mock_bigquery_client):
-    abstracts = [MagicMock(abstract="This paper uses F1-score and AUC."), MagicMock(abstract="No metrics here.")]
+    abstracts = [DummyRow("This paper uses F1-score and AUC."), DummyRow("No metrics here.")]
     mock_bigquery_client.query.return_value.result.return_value = abstracts
     metrics = ["F1-score", "AUC"]
     counts = insight_agent.evaluation_metrics_regex(metrics)
