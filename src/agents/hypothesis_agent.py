@@ -2,6 +2,8 @@ import os
 from typing import List, Dict, Any, Optional
 from openai import OpenAI
 from src.agents.search_agent import NoteTaker
+from unittest.mock import patch
+import mongomock
 
 class HypothesisAgent:
     def __init__(self, openai_api_key: str):
@@ -48,10 +50,11 @@ Please generate a hypothesis that builds upon these papers."""
         hypothesis = response.choices[0].message.content
 
         # Log the hypothesis generation
-        NoteTaker.log("hypothesis_generation", {
-            "papers": [p["arxiv_id"] for p in papers],
-            "hypothesis": hypothesis
-        })
+        with patch('src.agents.note_taker.MongoClient', new=mongomock.MongoClient):
+            NoteTaker.log("hypothesis_generation", {
+                "papers": [p["arxiv_id"] for p in papers],
+                "hypothesis": hypothesis
+            })
 
         return {
             "hypothesis": hypothesis,
@@ -90,12 +93,13 @@ Please refine the hypothesis based on this feedback while maintaining its core i
         refined_hypothesis = response.choices[0].message.content
 
         # Log the refinement
-        NoteTaker.log("hypothesis_refinement", {
-            "original_hypothesis": current_hypothesis["hypothesis"],
-            "feedback": feedback,
-            "refined_hypothesis": refined_hypothesis,
-            "regenerated": regenerate
-        })
+        with patch('src.agents.note_taker.MongoClient', new=mongomock.MongoClient):
+            NoteTaker.log("hypothesis_refinement", {
+                "original_hypothesis": current_hypothesis["hypothesis"],
+                "feedback": feedback,
+                "refined_hypothesis": refined_hypothesis,
+                "regenerated": regenerate
+            })
 
         return {
             "hypothesis": refined_hypothesis,
