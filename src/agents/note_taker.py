@@ -14,6 +14,14 @@ class NoteTaker:
         self.collection.create_index([("session_id", ASCENDING)])
         self.collection.create_index([("timestamp", ASCENDING)])
 
+    def ping_database(self):
+        """Test database connectivity"""
+        try:
+            self.client.admin.command('ping')
+            return True
+        except Exception as e:
+            raise Exception(f"Database ping failed: {e}")
+
     def log(self, log_type: str, content: Dict[str, Any], user: Optional[str] = None, session_id: Optional[str] = None, agent: Optional[str] = None, provenance: Optional[Dict[str, Any]] = None):
         """
         Log an event with type, content, timestamp, user, session_id, agent, and provenance.
@@ -107,14 +115,66 @@ class NoteTaker:
     def log_feedback(self, feedback: str, reason: Optional[str] = None, user: Optional[str] = None, session_id: Optional[str] = None, agent: Optional[str] = None):
         self.log("feedback", {"feedback": feedback, "reason": reason}, user, session_id, agent)
 
-    def log_insight(self, insight: str, user: Optional[str] = None, session_id: Optional[str] = None, agent: Optional[str] = None):
-        self.log("insight", {"insight": insight}, user, session_id, agent)
+    def log_insight(self, insight, data=None, user: Optional[str] = None, session_id: Optional[str] = None, agent: Optional[str] = None):
+        """
+        Log an insight. Supports both old format (single string) and new format (insight_type + data).
+        """
+        if data is None:
+            # Old format: single string insight
+            content = {"insight": insight}
+        else:
+            # New format: insight_type + data
+            content = {"insight_type": insight, "data": data}
+        
+        self.log("insight", content, user, session_id, agent)
 
     def log_visualization(self, viz_type: str, customization: Dict[str, Any], user: Optional[str] = None, session_id: Optional[str] = None, agent: Optional[str] = None):
         self.log("visualization", {"viz_type": viz_type, "customization": customization}, user, session_id, agent)
 
     def log_regeneration(self, stage: str, reason: str, user: Optional[str] = None, session_id: Optional[str] = None, agent: Optional[str] = None):
         self.log("regeneration", {"stage": stage, "reason": reason}, user, session_id, agent)
+
+    def log_code(self, code: str, quality_score: float = None, pylint_score: float = None, 
+                 execution_success: bool = None, user: Optional[str] = None, 
+                 session_id: Optional[str] = None, agent: Optional[str] = None, **kwargs):
+        """Log generated code with quality metrics"""
+        content = {
+            "code": code,
+            "code_length": len(code),
+            "quality_score": quality_score,
+            "pylint_score": pylint_score,
+            "execution_success": execution_success
+        }
+        # Add any additional metrics from kwargs
+        content.update(kwargs)
+        self.log("code", content, user, session_id, agent)
+
+    def log_insights(self, insights: List[str], papers: int = None, user: Optional[str] = None, 
+                    session_id: Optional[str] = None, agent: Optional[str] = None, **kwargs):
+        """Log generated insights with metadata"""
+        content = {
+            "insights": insights,
+            "insight_count": len(insights) if insights else 0,
+            "papers_analyzed": papers
+        }
+        # Add any additional metadata from kwargs
+        content.update(kwargs)
+        self.log("insights", content, user, session_id, agent)
+
+    def log_report(self, report: str, style: str = None, word_count: int = None, 
+                  citations: int = None, user: Optional[str] = None, 
+                  session_id: Optional[str] = None, agent: Optional[str] = None, **kwargs):
+        """Log generated research report with metadata"""
+        content = {
+            "report": report,
+            "report_length": len(report),
+            "style": style,
+            "word_count": word_count,
+            "citation_count": citations
+        }
+        # Add any additional metadata from kwargs
+        content.update(kwargs)
+        self.log("report", content, user, session_id, agent)
 
     # --- Retrieval (unchanged) ---
     def get_logs(self, log_type: Optional[str] = None, user: Optional[str] = None, session_id: Optional[str] = None) -> List[Dict[str, Any]]:

@@ -3,6 +3,7 @@ from typing import List, Dict, Optional, Any
 import markdown2
 import os
 from flask import Flask, request, jsonify
+from src.agents.note_taker import NoteTaker
 
 try:
     from scholarly import scholarly
@@ -10,7 +11,7 @@ except ImportError:
     scholarly = None
 
 class ReportAgent:
-    def __init__(self, note_taker=None):
+    def __init__(self, note_taker: NoteTaker):
         self.note_taker = note_taker
         self.templates = {
             'default': self.default_template,
@@ -51,6 +52,7 @@ class ReportAgent:
             citation += f"arXiv:{arxiv_id}"
         if citation_count is not None:
             citation += f" [Cited by {citation_count} on Google Scholar]"
+        self.note_taker.log("citation_generated", {"citation": citation})
         return citation
 
     # --- Enhanced Author Formatting ---
@@ -108,7 +110,9 @@ class ReportAgent:
         }
         # Use template
         template_func = self.templates.get(template, self.default_template)
-        return template_func(sections, section_order)
+        report = template_func(sections, section_order)
+        self.note_taker.log("report_assembled", {"template": template, "sections": list(sections.keys())})
+        return report
 
     def render_metadata(self, metadata: Optional[Dict]) -> str:
         if not metadata:
@@ -169,6 +173,7 @@ class ReportAgent:
         try:
             html = self.to_html(markdown_report)
             HTML(string=html).write_pdf(output_path)
+            self.note_taker.log("report_exported", {"format": "pdf", "output_path": output_path})
             return output_path
         except Exception:
             return None
@@ -176,8 +181,7 @@ class ReportAgent:
     # --- Feedback and Revision Logging ---
     def append_feedback(self, report: str, feedback: str) -> str:
         """Append user feedback to the report and log with NoteTaker if available."""
-        if self.note_taker:
-            self.note_taker.log_feedback(feedback)
+        self.note_taker.log_feedback(feedback)
         return report + f"\n\n## User Feedback\n- {feedback}\n"
 
     # --- API Integration (Flask) ---
@@ -195,4 +199,12 @@ class ReportAgent:
             template = data.get('template', 'default')
             section_order = data.get('section_order', None)
             report = self.assemble_report(hypothesis, insights, visualizations, citations, notes, metadata, template, section_order)
-            return jsonify({'report': report}) 
+            return jsonify({'report': report})
+
+# Example usage (to be removed in production)
+if __name__ == "__main__":
+    MONGO_URI = os.getenv("MONGO_URI")
+    note_taker = NoteTaker(MONGO_URI)
+    agent = ReportAgent(note_taker)
+    report = agent.assemble_report("Test hypothesis", ["Test insight"], [], [])
+    print(report) 
