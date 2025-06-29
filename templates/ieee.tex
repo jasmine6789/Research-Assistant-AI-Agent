@@ -1,0 +1,53 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{graphicx}
+\usepackage{amsmath}
+
+\begin{document}
+
+\title{ {{ title }} }
+
+\author{
+\IEEEauthorblockN{ {{ authors | format_authors }} }
+{% if affiliation %}
+\IEEEauthorblockA{ {{ affiliation }} }
+{% endif %}
+}
+
+\maketitle
+
+\begin{abstract}
+{{ abstract | format_abstract }}
+\end{abstract}
+
+\begin{IEEEkeywords}
+{{ keywords | format_keywords }}
+\end{IEEEkeywords}
+
+\section{Introduction}
+{{ introduction }}
+
+\section{Related Work}
+{{ related_work }}
+
+\section{Methodology}
+{{ methodology }}
+
+\section{Results and Discussion}
+{{ results }}
+
+\section{Conclusion}
+{{ conclusion }}
+
+{% if acknowledgments %}
+\section{Acknowledgment}
+{{ acknowledgments }}
+{% endif %}
+
+\begin{thebibliography}{1}
+{% for citation in citations %}
+\bibitem{ref{{ loop.index }}}
+{{ citation | format_citation('ieee') }}
+{% endfor %}
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,101 @@
+# Development Environment Configuration
+# Inherits from base.yaml and overrides specific settings for development
+
+# API Configuration - Development settings
+api:
+  openai:
+    model: "gpt-3.5-turbo"  # Use cheaper model for development
+    max_tokens: 2000
+    timeout: 15
+  
+  huggingface:
+    enabled: false  # Disable for faster development
+    cache_dir: "./dev_models"
+
+# Database Configuration - Development
+database:
+  mongodb:
+    database_name: "research_assistant_dev"
+    connection_timeout: 5
+    max_pool_size: 10
+
+# Agent Configuration - Development
+agents:
+  search:
+    max_papers_per_search: 3  # Fewer papers for faster testing
+    
+  hypothesis:
+    max_iterations: 2
+    min_hypothesis_length: 50
+    
+  code:
+    enable_huggingface: false
+    validation_timeout: 15
+    enable_execution: false  # Disable code execution in dev
+    
+  visualization:
+    output_dpi: 150  # Lower quality for faster generation
+    
+  report:
+    max_paper_length: 5000  # Shorter papers for testing
+
+# Logging Configuration - Development
+logging:
+  level: "DEBUG"
+  handlers:
+    - type: "console"
+      level: "DEBUG"
+    - type: "file"
+      filename: "logs/dev_research_agent.log"
+      max_bytes: 1048576  # 1MB
+      backup_count: 2
+  
+  structured_logging:
+    enabled: true
+    format: "json"
+
+# Performance Configuration - Development
+performance:
+  max_concurrent_agents: 2
+  request_timeout: 30
+  cache_ttl: 300  # 5 minutes
+  rate_limiting:
+    enabled: false  # Disable rate limiting in dev
+  
+  memory:
+    max_memory_usage: "256MB"
+    gc_threshold: "200MB"
+
+# Security Configuration - Development
+security:
+  log_sensitive_data: true  # Allow for debugging
+  encrypt_outputs: false
+  max_file_size: "10MB"
+
+# Output Configuration - Development
+output:
+  base_directory: "dev_generated_papers"
+  cleanup_after_days: 7
+  backup_enabled: false
+
+# Human-in-the-Loop Configuration - Development
+human_in_loop:
+  enabled: false  # Disable for automated testing
+  timeout_seconds: 30
+  default_approval: true  # Auto-approve for testing
+
+# Monitoring Configuration - Development
+monitoring:
+  enabled: true
+  metrics_collection: false
+  performance_tracking: true
+  error_reporting: true
+  health_check_interval: 30
+
+# Development Configuration
+development:
+  debug_mode: true
+  verbose_logging: true
+  mock_apis: false
+  test_data_enabled: true
+  profiling_enabled: true 

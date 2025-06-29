@@ -1,0 +1,162 @@
+# Production Environment Configuration
+# Inherits from base.yaml and overrides specific settings for production
+
+# API Configuration - Production settings
+api:
+  openai:
+    model: "gpt-4"
+    max_tokens: 4000
+    temperature: 0.3  # Lower temperature for more consistent results
+    timeout: 60
+    max_retries: 5
+    backoff_factor: 3
+  
+  huggingface:
+    enabled: true
+    cache_dir: "/app/models/huggingface"
+    max_models_cached: 10
+    timeout: 120
+
+# Database Configuration - Production
+database:
+  mongodb:
+    database_name: "research_assistant_prod"
+    connection_timeout: 30
+    max_pool_size: 200
+    retry_writes: true
+  
+  bigquery:
+    dataset_id: "research_data_prod"
+    table_id: "paper_analysis_prod"
+    location: "US"
+
+# Agent Configuration - Production
+agents:
+  search:
+    max_papers_per_search: 5
+    similarity_threshold: 0.8  # Higher threshold for quality
+    
+  hypothesis:
+    max_iterations: 5
+    confidence_threshold: 0.9
+    min_hypothesis_length: 200
+    max_hypothesis_length: 2000
+    
+  code:
+    enable_huggingface: true
+    validation_timeout: 60
+    max_complexity_score: 15
+    enable_spell_check: true
+    enable_execution: true
+    execution_timeout: 120
+    
+  visualization:
+    output_dpi: 300
+    style: "scientific"
+    save_format: "png"
+    
+  report:
+    default_style: "arxiv"
+    include_appendix: true
+    max_paper_length: 20000
+    citation_style: "APA"
+    export_formats: ["txt", "html", "latex", "pdf"]
+
+# Logging Configuration - Production
+logging:
+  level: "WARNING"  # Less verbose in production
+  handlers:
+    - type: "file"
+      filename: "/app/logs/research_agent.log"
+      max_bytes: 52428800  # 50MB
+      backup_count: 10
+    - type: "console"
+      level: "ERROR"  # Only errors to console
+  
+  structured_logging:
+    enabled: true
+    format: "json"
+    fields: ["timestamp", "level", "agent", "action", "duration", "status", "user_id", "session_id"]
+
+# Performance Configuration - Production
+performance:
+  max_concurrent_agents: 10
+  request_timeout: 300
+  cache_ttl: 7200  # 2 hours
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 30  # Conservative for production
+    burst_size: 5
+  
+  memory:
+    max_memory_usage: "2GB"
+    gc_threshold: "1.5GB"
+
+# Security Configuration - Production
+security:
+  api_key_rotation_days: 30
+  log_sensitive_data: false
+  encrypt_outputs: true
+  allowed_file_types: ["txt", "html", "tex", "pdf"]
+  max_file_size: "100MB"
+
+# Output Configuration - Production
+output:
+  base_directory: "/app/generated_papers"
+  filename_template: "{user_id}_{query_hash}_{timestamp}"
+  backup_enabled: true
+  cleanup_after_days: 90
+  
+  paper_settings:
+    font_family: "Times New Roman"
+    font_size: 12
+    line_spacing: 1.5
+    margin: "1 inch"
+
+# Human-in-the-Loop Configuration - Production
+human_in_loop:
+  enabled: true
+  approval_required_stages: ["hypothesis", "code", "report"]
+  timeout_seconds: 600  # 10 minutes
+  default_approval: false
+
+# Monitoring Configuration - Production
+monitoring:
+  enabled: true
+  metrics_collection: true
+  performance_tracking: true
+  error_reporting: true
+  health_check_interval: 30
+  
+  alerts:
+    error_threshold: 5  # errors per hour
+    latency_threshold: 60  # seconds
+    memory_threshold: 85  # percentage
+    
+  external_monitoring:
+    enabled: true
+    endpoint: "https://monitoring.googleapis.com"
+    service_name: "research-assistant-agent"
+
+# Development Configuration - Production (all disabled)
+development:
+  debug_mode: false
+  verbose_logging: false
+  mock_apis: false
+  test_data_enabled: false
+  profiling_enabled: false
+
+# Cloud Configuration - Production
+cloud:
+  platform: "gcp"
+  region: "us-central1"
+  auto_scaling:
+    enabled: true
+    min_instances: 2
+    max_instances: 20
+    target_cpu_utilization: 70
+  
+  storage:
+    bucket_name: "research-assistant-outputs"
+    backup_bucket: "research-assistant-backups"
+    retention_days: 365 

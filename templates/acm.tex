@@ -1,0 +1,69 @@
+\documentclass[sigconf]{acmart}
+
+\begin{document}
+
+\title{ {{ title }} }
+
+{% if authors %}
+\author{ {{ authors | format_authors }} }
+{% endif %}
+
+{% if affiliation %}
+\affiliation{
+  \institution{ {{ affiliation }} }
+}
+{% endif %}
+
+\begin{abstract}
+{{ abstract | format_abstract }}
+\end{abstract}
+
+\begin{CCSXML}
+<ccs2012>
+{% for keyword in keywords %}
+<concept>
+<concept_id>{{ keyword }}</concept_id>
+<concept_desc>{{ keyword }}</concept_desc>
+<concept_significance>300</concept_significance>
+</concept>
+{% endfor %}
+</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[300]{ {{ keywords | format_keywords }} }
+
+\keywords{ {{ keywords | format_keywords }} }
+
+\maketitle
+
+\section{Introduction}
+{{ introduction }}
+
+\section{Related Work}
+{{ related_work }}
+
+\section{Methodology}
+{{ methodology }}
+
+\section{Results}
+{{ results }}
+
+\section{Conclusion}
+{{ conclusion }}
+
+{% if acknowledgments %}
+\begin{acks}
+{{ acknowledgments }}
+\end{acks}
+{% endif %}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+{% if appendix %}
+\appendix
+\section{Additional Details}
+{{ appendix }}
+{% endif %}
+
+\end{document}
